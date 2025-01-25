@@ -19,6 +19,9 @@ func main() {
 		createBranch string
 		deleteBranch string
 		listCommits  string
+		listUsers    bool
+		enableUser   string
+		disableUser  string
 	)
 
 	// Long and short forms for flags
@@ -33,6 +36,16 @@ func main() {
 
 	flag.StringVar(&listCommits, "list-commits", "", "List commits for given branch name")
 	flag.StringVar(&listCommits, "lc", "", "List commits for given branch name (shorthand)")
+
+	// User management flags
+	flag.BoolVar(&listUsers, "list-users", false, "List all users")
+	flag.BoolVar(&listUsers, "lu", false, "List all users (shorthand)")
+
+	flag.StringVar(&enableUser, "enable-user", "", "Enable user by username")
+	flag.StringVar(&enableUser, "eu", "", "Enable user by username (shorthand)")
+
+	flag.StringVar(&disableUser, "disable-user", "", "Disable user by username")
+	flag.StringVar(&disableUser, "du", "", "Disable user by username (shorthand)")
 
 	flag.Parse()
 
@@ -53,6 +66,12 @@ func main() {
 			err = commands.DeleteBranch(deleteBranch)
 		} else if listCommits != "" {
 			err = commands.ListCommits(listCommits)
+		} else if listUsers {
+			err = commands.ListUsers()
+		} else if enableUser != "" {
+			err = commands.EnableUser(enableUser)
+		} else if disableUser != "" {
+			err = commands.DisableUser(disableUser)
 		}
 
 		if err != nil {

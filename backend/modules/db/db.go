@@ -65,9 +65,10 @@ func initSchema(dbType string) error {
 			lastname VARCHAR(128) NOT NULL,
 			skey1 VARCHAR(128) NOT NULL,
 			skey2 VARCHAR(128) NOT NULL,
-			created_at %s
+			created_at %s,
+			is_active %s DEFAULT false
 		)
-	`, autoIncrementSyntax, timestampSyntax))
+	`, autoIncrementSyntax, timestampSyntax, booleanType))
 	if err != nil {
 		return fmt.Errorf("error creating users table: %v", err)
 	}

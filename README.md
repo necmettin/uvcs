@@ -37,6 +37,26 @@ You can set these variables in a `.env` file or in your environment. The CLI def
 
 The application can be used as a CLI tool with the following commands:
 
+### User Management
+
+1. List Users
+   ```bash
+   ./uvcs --list-users  # or shorter form: --lu
+   ```
+   Shows all users with their status (enabled/disabled), names, and creation dates.
+
+2. Enable User
+   ```bash
+   ./uvcs --enable-user johndoe  # or shorter form: --eu johndoe
+   ```
+   Enables a disabled user, allowing them to use the system.
+
+3. Disable User
+   ```bash
+   ./uvcs --disable-user johndoe  # or shorter form: --du johndoe
+   ```
+   Disables an enabled user, preventing them from using the system.
+
 ### Branch Management
 
 1. List Branches
