@@ -19,16 +19,9 @@ func HandleRegister(c *gin.Context) {
 	firstname := c.PostForm("firstname")
 	lastname := c.PostForm("lastname")
 
-	if password == "" || firstname == "" || lastname == "" {
+	if password == "" || firstname == "" || lastname == "" || email == "" {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Missing required fields",
-		})
-		return
-	}
-
-	if username == "" && email == "" {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Either username or email is required",
+			"error": "Email, password, first name, and last name are required",
 		})
 		return
 	}
@@ -51,24 +44,18 @@ func HandleRegister(c *gin.Context) {
 	var query string
 	var args []interface{}
 
-	if username != "" && email != "" {
+	if username != "" {
 		query = `
 			INSERT INTO users (username, email, password, firstname, lastname, skey1, skey2, is_active)
 			VALUES ($1, $2, $3, $4, $5, $6, $7, true)
 			RETURNING id`
 		args = []interface{}{username, email, hashedPassword, firstname, lastname, skey1, skey2}
-	} else if email != "" {
+	} else {
 		query = `
 			INSERT INTO users (email, password, firstname, lastname, skey1, skey2, is_active)
 			VALUES ($1, $2, $3, $4, $5, $6, true)
 			RETURNING id`
 		args = []interface{}{email, hashedPassword, firstname, lastname, skey1, skey2}
-	} else {
-		query = `
-			INSERT INTO users (username, password, firstname, lastname, skey1, skey2, is_active)
-			VALUES ($1, $2, $3, $4, $5, $6, true)
-			RETURNING id`
-		args = []interface{}{username, hashedPassword, firstname, lastname, skey1, skey2}
 	}
 
 	err = db.DB.QueryRow(query, args...).Scan(&userID)
