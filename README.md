@@ -37,21 +37,67 @@ You can set these variables in a `.env` file or in your environment. The CLI def
 
 The application can be used as a CLI tool with the following commands:
 
+### Repository Management
+
+1. Create Repository
+   ```bash
+   ./uvcs --create-repo myproject --owner johndoe --desc "My awesome project"
+   # or shorter form:
+   ./uvcs --cr myproject --owner johndoe --desc "My awesome project"
+   ```
+   Creates a new repository owned by the specified user.
+
+2. List Repositories
+   ```bash
+   ./uvcs --list-repos johndoe  # or shorter form: --lr johndoe
+   ```
+   Shows all repositories the user has access to, including ownership status.
+
+3. Grant Access
+   ```bash
+   ./uvcs --grant-access johndoe/myproject --user janedoe --level write
+   # or shorter form:
+   ./uvcs --ga johndoe/myproject --user janedoe --level write
+   ```
+   Grants repository access to a user. Access levels can be 'read' or 'write'.
+
+4. Revoke Access
+   ```bash
+   ./uvcs --revoke-access johndoe/myproject --user janedoe
+   # or shorter form:
+   ./uvcs --ra johndoe/myproject --user janedoe
+   ```
+   Revokes repository access from a user.
+
+5. List Access
+   ```bash
+   ./uvcs --list-access johndoe/myproject  # or shorter form: --la johndoe/myproject
+   ```
+   Shows all users who have access to the repository, including their access levels.
+
 ### User Management
 
-1. List Users
+1. Create User
+   ```bash
+   ./uvcs --create-user johndoe --password secretpass --firstname John --lastname Doe
+   # or shorter form:
+   ./uvcs --cu johndoe -p secretpass -f John -l Doe
+   ```
+   Creates a new user with the specified credentials.
+
+2. List Users
    ```bash
    ./uvcs --list-users  # or shorter form: --lu
    ```
    Shows all users with their status (enabled/disabled), names, and creation dates.
 
-2. Enable User
+3. Enable User
    ```bash
    ./uvcs --enable-user johndoe  # or shorter form: --eu johndoe
    ```
    Enables a disabled user, allowing them to use the system.
 
-3. Disable User
+4. Disable User
    ```bash
    ./uvcs --disable-user johndoe  # or shorter form: --du johndoe
    ```
@@ -207,6 +253,104 @@ All branch management endpoints require authentication using `skey1` and `skey2`
    }
    ```
 
+### Repository API
+
+1. Get Repository Information
+   ```http
+   POST /api/repository
+   Form data: 
+   - skey1: string (required)
+   - skey2: string (required)
+   - owner: string (required) - repository owner's username
+   - name: string (required) - repository name
+   ```
+   Response:
+   ```json
+   {
+     "branches": [
+       {
+         "id": 1,
+         "name": "develop",
+         "description": "Main development branch",
+         "created_at": "2024-03-20T10:00:00Z",
+         "commit_ids": [1, 2, 3],
+         "head_commit": 3,
+         "is_active": true
+       }
+     ],
+     "commits": [
+       {
+         "id": 1,
+         "hash": "abc123def456",
+         "message": "Initial commit",
+         "datetime": "2024-03-20T10:00:00Z",
+         "tags": ["v1.0.0", "stable"],
+         "author": {
+           "id": 1,
+           "full_name": "John Doe"
+         },
+         "changes": [
+           {
+             "file_path": "src/main.go",
+             "change_type": "A",
+             "content_change": {
+               "content": "package main\n\nfunc main() {\n\tfmt.Println(\"Hello, World!\")\n}\n",
+               "ast_changes": [
+                 {
+                   "type": "package_declaration",
+                   "name": "main"
+                 },
+                 {
+                   "type": "function_declaration",
+                   "name": "main",
+                   "body": [
+                     {
+                       "type": "function_call",
+                       "package": "fmt",
+                       "function": "Println",
+                       "arguments": ["Hello, World!"]
+                     }
+                   ]
+                 }
+               ]
+             }
+           }
+         ]
+       }
+     ],
+     "content": {
+       "files": {
+         "src/main.go": {
+           "content": "package main\n\nfunc main() {\n\tfmt.Println(\"Hello, World!\")\n}\n",
+           "commit_id": 1,
+           "timestamp": "2024-03-20T10:00:00Z"
+         }
+       }
+     },
+     "access": {
+       "level": "write",
+       "users": [
+         {
+           "id": 1,
+           "full_name": "John Doe",
+           "access": "owner"
+         },
+         {
+           "id": 2,
+           "full_name": "Jane Doe",
+           "access": "write"
+         }
+       ]
+     }
+   }
+   ```
+
+   The response includes:
+   - All branches with their metadata
+   - Complete commit history
+   - Current repository content
+   - Access control information
+
 ### Example API Usage with cURL
 
 ```bash
@@ -225,8 +369,12 @@ curl -X POST http://localhost:80/api/branches/delete/feature/old \
 # List commits
 curl -X POST http://localhost:80/api/branches/develop/commits \
   -d "skey1=your_skey1&skey2=your_skey2"
+
+# Get repository information
+curl -X POST http://localhost:80/api/repository \
+  -d "skey1=your_skey1&skey2=your_skey2"
 ```
 
 ## Environment Variables
 
-- `PORT`: Web server port (default: 80) 
+- `PORT`: Web server port (default: 80)

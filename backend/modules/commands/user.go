@@ -5,7 +5,33 @@ import (
 	"strings"
 	"time"
 	"uvcs/modules/db"
+	"uvcs/modules/utils"
 )
+
+// CreateUser creates a new user with the given credentials
+func CreateUser(username, password, firstname, lastname string) error {
+	// Generate security keys
+	skey1 := utils.GenerateSecurityKey()
+	skey2 := utils.GenerateSecurityKey()
+
+	// Hash the password
+	hashedPassword, err := utils.HashPassword(password)
+	if err != nil {
+		return fmt.Errorf("error hashing password: %v", err)
+	}
+
+	// Create user
+	_, err = db.DB.Exec(`
+		INSERT INTO users (username, password, firstname, lastname, skey1, skey2, is_active)
+		VALUES ($1, $2, $3, $4, $5, $6, true)
+	`, username, hashedPassword, firstname, lastname, skey1, skey2)
+	if err != nil {
+		return fmt.Errorf("error creating user: %v", err)
+	}
+
+	fmt.Printf("Successfully created user '%s' (%s %s)\n", username, firstname, lastname)
+	return nil
+}
 
 // EnableUser enables a user by their username
 func EnableUser(username string) error {

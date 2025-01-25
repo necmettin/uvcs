@@ -73,15 +73,49 @@ func initSchema(dbType string) error {
 		return fmt.Errorf("error creating users table: %v", err)
 	}
 
-	// Create commit_history table
+	// Create repositories table
+	_, err = DB.Exec(fmt.Sprintf(`
+		CREATE TABLE IF NOT EXISTS repositories (
+			id %s,
+			name VARCHAR(128) NOT NULL,
+			description TEXT,
+			owner_id INTEGER REFERENCES users(id) ON DELETE RESTRICT,
+			created_at %s,
+			is_active %s DEFAULT true,
+			UNIQUE(owner_id, name)
+		)
+	`, autoIncrementSyntax, timestampSyntax, booleanType))
+	if err != nil {
+		return fmt.Errorf("error creating repositories table: %v", err)
+	}
+
+	// Create repository access table
+	_, err = DB.Exec(fmt.Sprintf(`
+		CREATE TABLE IF NOT EXISTS repository_access (
+			id %s,
+			repository_id INTEGER REFERENCES repositories(id) ON DELETE CASCADE,
+			user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+			access_level VARCHAR(10) NOT NULL CHECK (access_level IN ('read', 'write')),
+			granted_at %s,
+			granted_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
+			UNIQUE(repository_id, user_id)
+		)
+	`, autoIncrementSyntax, timestampSyntax))
+	if err != nil {
+		return fmt.Errorf("error creating repository_access table: %v", err)
+	}
+
+	// Create commit_history table with repository_id
 	_, err = DB.Exec(fmt.Sprintf(`
 		CREATE TABLE IF NOT EXISTS commit_history (
 			id %s,
+			repository_id INTEGER REFERENCES repositories(id) ON DELETE CASCADE,
 			user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
 			commit_hash VARCHAR(128) NOT NULL,
 			commit_datetime %s,
 			commit_message TEXT NOT NULL,
-			tags VARCHAR(128)[] DEFAULT ARRAY[]::VARCHAR(128)[]
+			tags VARCHAR(128)[] DEFAULT ARRAY[]::VARCHAR(128)[],
+			UNIQUE(repository_id, commit_hash)
 		)
 	`, autoIncrementSyntax, timestampSyntax))
 	if err != nil {
@@ -102,16 +136,18 @@ func initSchema(dbType string) error {
 		return fmt.Errorf("error creating commit_details table: %v", err)
 	}
 
-	// Create branches table
+	// Create branches table with repository_id
 	_, err = DB.Exec(fmt.Sprintf(`
 		CREATE TABLE IF NOT EXISTS branches (
 			id %s,
-			name VARCHAR(128) NOT NULL UNIQUE,
+			repository_id INTEGER REFERENCES repositories(id) ON DELETE CASCADE,
+			name VARCHAR(128) NOT NULL,
 			description TEXT,
 			created_at %s,
 			commit_ids INTEGER[] DEFAULT ARRAY[]::INTEGER[],
 			head_commit_id INTEGER REFERENCES commit_history(id) ON DELETE SET NULL,
-			is_active %s DEFAULT true
+			is_active %s DEFAULT true,
+			UNIQUE(repository_id, name)
 		)
 	`, autoIncrementSyntax, timestampSyntax, booleanType))
 	if err != nil {
@@ -122,6 +158,11 @@ func initSchema(dbType string) error {
 	_, err = DB.Exec(`
 		CREATE INDEX IF NOT EXISTS idx_commit_details_commit_id ON commit_details(commit_id);
 		CREATE INDEX IF NOT EXISTS idx_branches_name ON branches(name);
+		CREATE INDEX IF NOT EXISTS idx_repositories_owner ON repositories(owner_id);
+		CREATE INDEX IF NOT EXISTS idx_repository_access_user ON repository_access(user_id);
+		CREATE INDEX IF NOT EXISTS idx_repository_access_repo ON repository_access(repository_id);
+		CREATE INDEX IF NOT EXISTS idx_commit_history_repo ON commit_history(repository_id);
+		CREATE INDEX IF NOT EXISTS idx_branches_repo ON branches(repository_id);
 	`)
 	if err != nil {
 		return fmt.Errorf("error creating indexes: %v", err)
