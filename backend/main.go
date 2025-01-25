@@ -196,6 +196,7 @@ func main() {
 
 	// Repository routes
 	r.POST("/api/repository", handlers.HandleGetRepository)
+	r.POST("/api/repository/commit", handlers.HandleCommit)
 
 	// Get port from environment variable or default to 80
 	port := os.Getenv("PORT")
