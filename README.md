@@ -79,27 +79,42 @@ The application can be used as a CLI tool with the following commands:
 
 1. Create User
    ```bash
+   # Create user with username
    ./uvcs --create-user johndoe --password secretpass --firstname John --lastname Doe
    # or shorter form:
    ./uvcs --cu johndoe -p secretpass -f John -l Doe
+
+   # Create user with email
+   ./uvcs --email john@example.com --password secretpass --firstname John --lastname Doe
+   # or shorter form:
+   ./uvcs -e john@example.com -p secretpass -f John -l Doe
+
+   # Create user with both (recommended)
+   ./uvcs --create-user johndoe --email john@example.com --password secretpass --firstname John --lastname Doe
    ```
-   Creates a new user with the specified credentials.
+   Creates a new user with the specified credentials. Either username or email must be provided.
 
 2. List Users
    ```bash
    ./uvcs --list-users  # or shorter form: --lu
    ```
-   Shows all users with their status (enabled/disabled), names, and creation dates.
+   Shows all users with their identifier (username or email), names, creation dates, and status.
 
 3. Enable User
    ```bash
-   ./uvcs --enable-user johndoe  # or shorter form: --eu johndoe
+   # Enable by username
+   ./uvcs --enable-user johndoe
+   # or by email
+   ./uvcs --enable-user john@example.com
    ```
    Enables a disabled user, allowing them to use the system.
 
 4. Disable User
    ```bash
-   ./uvcs --disable-user johndoe  # or shorter form: --du johndoe
+   # Disable by username
+   ./uvcs --disable-user johndoe
+   # or by email
+   ./uvcs --disable-user john@example.com
    ```
    Disables an enabled user, preventing them from using the system.
 

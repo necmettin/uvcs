@@ -59,14 +59,16 @@ func initSchema(dbType string) error {
 	_, err := DB.Exec(fmt.Sprintf(`
 		CREATE TABLE IF NOT EXISTS users (
 			id %s,
-			username VARCHAR(128) UNIQUE NOT NULL,
+			username VARCHAR(128) UNIQUE,
+			email VARCHAR(256) UNIQUE NOT NULL,
 			password VARCHAR(256) NOT NULL,
 			firstname VARCHAR(128) NOT NULL,
 			lastname VARCHAR(128) NOT NULL,
 			skey1 VARCHAR(128) NOT NULL,
 			skey2 VARCHAR(128) NOT NULL,
 			created_at %s,
-			is_active %s DEFAULT false
+			is_active %s DEFAULT false,
+			CHECK (username IS NOT NULL OR email IS NOT NULL)
 		)
 	`, autoIncrementSyntax, timestampSyntax, booleanType))
 	if err != nil {

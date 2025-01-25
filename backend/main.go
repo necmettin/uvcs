@@ -24,6 +24,7 @@ func main() {
 		enableUser   string
 		disableUser  string
 		createUser   string
+		userEmail    string
 		userPass     string
 		firstName    string
 		lastName     string
@@ -57,8 +58,10 @@ func main() {
 	flag.BoolVar(&listUsers, "list-users", false, "List all users")
 	flag.BoolVar(&listUsers, "lu", false, "List all users (shorthand)")
 
-	flag.StringVar(&createUser, "create-user", "", "Create a new user with given username")
+	flag.StringVar(&createUser, "create-user", "", "Create a new user with given username (optional if email is provided)")
 	flag.StringVar(&createUser, "cu", "", "Create a new user with given username (shorthand)")
+	flag.StringVar(&userEmail, "email", "", "Email for new user (optional if username is provided)")
+	flag.StringVar(&userEmail, "e", "", "Email for new user (shorthand)")
 	flag.StringVar(&userPass, "password", "", "Password for new user")
 	flag.StringVar(&userPass, "p", "", "Password for new user (shorthand)")
 	flag.StringVar(&firstName, "firstname", "", "First name for new user")
@@ -66,7 +69,7 @@ func main() {
 	flag.StringVar(&lastName, "lastname", "", "Last name for new user")
 	flag.StringVar(&lastName, "l", "", "Last name for new user (shorthand)")
 
-	flag.StringVar(&enableUser, "enable-user", "", "Enable user by username")
+	flag.StringVar(&enableUser, "enable-user", "", "Enable user by username or email")
 	flag.StringVar(&enableUser, "eu", "", "Enable user by username (shorthand)")
 
 	flag.StringVar(&disableUser, "disable-user", "", "Disable user by username")
@@ -118,7 +121,7 @@ func main() {
 			err = commands.EnableUser(enableUser)
 		} else if disableUser != "" {
 			err = commands.DisableUser(disableUser)
-		} else if createUser != "" {
+		} else if createUser != "" || userEmail != "" {
 			if userPass == "" {
 				log.Fatal("Password (--password) is required")
 			}
@@ -128,7 +131,17 @@ func main() {
 			if lastName == "" {
 				log.Fatal("Last name (--lastname) is required")
 			}
-			err = commands.CreateUser(createUser, userPass, firstName, lastName)
+			if createUser == "" && userEmail == "" {
+				log.Fatal("Either username (--create-user) or email (--email) is required")
+			}
+
+			identifier := createUser
+			identifierType := "username"
+			if createUser == "" {
+				identifier = userEmail
+				identifierType = "email"
+			}
+			err = commands.CreateUser(identifier, identifierType, userPass, firstName, lastName)
 		} else if createRepo != "" {
 			if repoOwner == "" {
 				log.Fatal("Repository owner (--owner) is required")
