@@ -19,6 +19,167 @@
     └── postgres-data/     # PostgreSQL data directory
 ```
 
+## API Documentation
+
+### Authentication Endpoints
+
+1. Register User
+   ```http
+   POST /register
+   Content-Type: application/x-www-form-urlencoded
+
+   Form data:
+   - username: string (required)
+   - password: string (required)
+   - firstname: string (required)
+   - lastname: string (required)
+   ```
+   Response:
+   ```json
+   {
+     "message": "User registered successfully",
+     "user": {
+       "id": 1,
+       "username": "johndoe",
+       "firstname": "John",
+       "lastname": "Doe",
+       "skey1": "generated_key_1",
+       "skey2": "generated_key_2"
+     }
+   }
+   ```
+   Note: Save the `skey1` and `skey2` values securely. They are required for authenticating API requests.
+
+2. Login
+   ```http
+   POST /login
+   Content-Type: application/x-www-form-urlencoded
+
+   Form data:
+   - username: string (required)
+   - password: string (required)
+   ```
+   Response:
+   ```json
+   {
+     "message": "Login successful",
+     "user": {
+       "id": 1,
+       "username": "johndoe",
+       "firstname": "John",
+       "lastname": "Doe",
+       "skey1": "your_skey1",
+       "skey2": "your_skey2"
+     }
+   }
+   ```
+
+### Example Usage with cURL
+
+```bash
+# Register a new user
+curl -X POST http://localhost:8080/register \
+  -d "username=johndoe" \
+  -d "password=secretpass" \
+  -d "firstname=John" \
+  -d "lastname=Doe"
+
+# Login
+curl -X POST http://localhost:8080/login \
+  -d "username=johndoe" \
+  -d "password=secretpass"
+```
+
+### Branch Management Endpoints
+
+All branch management endpoints require authentication using `skey1` and `skey2` obtained during registration or login.
+
+1. List Branches
+   ```http
+   POST /api/branches/list
+   Form data: skey1, skey2
+   ```
+   Response:
+   ```json
+   {
+     "branches": [
+       {
+         "ID": 1,
+         "Name": "develop",
+         "Description": "Main development branch",
+         "CreatedAt": "2024-03-20T10:00:00Z",
+         "CommitIDs": [1, 2, 3],
+         "HeadCommit": 3,
+         "IsActive": true
+       }
+     ]
+   }
+   ```
+
+2. Create Branch
+   ```http
+   POST /api/branches/create
+   Form data: skey1, skey2, name
+   ```
+   Response:
+   ```json
+   {
+     "message": "Branch created successfully"
+   }
+   ```
+
+3. Delete Branch
+   ```http
+   POST /api/branches/delete/:name
+   Form data: skey1, skey2
+   ```
+   Response:
+   ```json
+   {
+     "message": "Branch deleted successfully"
+   }
+   ```
+
+4. List Commits
+   ```http
+   POST /api/branches/:name/commits
+   Form data: skey1, skey2
+   ```
+   Response:
+   ```json
+   {
+     "commits": [
+       {
+         "id": 1,
+         "hash": "abc123def456",
+         "message": "Initial commit",
+         "datetime": "2024-03-20T10:00:00Z",
+         "author": "John Doe"
+       }
+     ]
+   }
+   ```
+
+### Example Branch API Usage with cURL
+
+```bash
+# List branches
+curl -X POST http://localhost:8080/api/branches/list \
+  -d "skey1=your_skey1&skey2=your_skey2"
+
+# Create branch
+curl -X POST http://localhost:8080/api/branches/create \
+  -d "skey1=your_skey1&skey2=your_skey2&name=feature/auth"
+
+# Delete branch
+curl -X POST http://localhost:8080/api/branches/delete/feature/old \
+  -d "skey1=your_skey1&skey2=your_skey2"
+
+# List commits
+curl -X POST http://localhost:8080/api/branches/develop/commits \
+  -d "skey1=your_skey1&skey2=your_skey2"
+```
+
 ## Environment Variables
 The application uses these environment variables (configured in .env file):
 - PORT=80 (container port)
@@ -50,24 +211,6 @@ docker-compose up --build
 The services will be available at:
 - UVCS API: http://localhost:8080
 - PostgreSQL: localhost:5432
-
-## API Endpoints
-
-1. Register a new user:
-```bash
-curl -X POST http://localhost:8080/register \
-  -d "firstname=John" \
-  -d "lastname=Doe" \
-  -d "email=john@example.com" \
-  -d "password=secret123"
-```
-
-2. Login:
-```bash
-curl -X POST http://localhost:8080/login \
-  -d "email=john@example.com" \
-  -d "password=secret123"
-```
 
 ## Stopping the Project
 ```bash
