@@ -393,3 +393,65 @@ curl -X POST http://localhost:80/api/repository \
 ## Environment Variables
 
 - `PORT`: Web server port (default: 80)
+
+## Testing
+
+### Prerequisites
+- PostgreSQL server running locally
+- Test database named `uvcs_test` created
+- Test user with username `postgres` and password `postgres`
+
+### Running Tests
+To run all tests:
+```bash
+cd backend
+go test ./... -v
+```
+
+To run tests for a specific package:
+```bash
+# Test database package
+go test ./modules/db -v
+
+# Test utils package
+go test ./modules/utils -v
+
+# Test handlers
+go test ./handlers -v
+
+# Test commands
+go test ./commands -v
+```
+
+### Test Coverage
+To run tests with coverage:
+```bash
+go test ./... -coverprofile=coverage.out
+go tool cover -html=coverage.out
+```
+
+### Test Structure
+The test suite includes:
+
+1. **Unit Tests**
+   - Authentication handlers (`handlers/auth_test.go`)
+   - Repository handlers (`handlers/repository_test.go`)
+   - Commit handlers (`handlers/commit_test.go`)
+   - Utility functions (`modules/utils/utils_test.go`)
+   - Database operations (`modules/db/db_test.go`)
+   - CLI commands (`commands/commands_test.go`)
+
+2. **Integration Tests**
+   - Database schema and constraints
+   - Repository operations
+   - User authentication flow
+   - Commit operations with diffs
+
+3. **Test Utilities**
+   - Test database setup and cleanup
+   - Test user creation
+   - Test repository creation
+   - Test data generation
+
+### Test Database
+The test suite uses a separate database (`uvcs_test`) to avoid interfering with the production database. The test database is automatically set up with the required schema before running tests and cleaned up afterward.
