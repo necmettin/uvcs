@@ -184,9 +184,14 @@ func main() {
 	// If no command line args, run web server
 	r := gin.Default()
 
+	// Health check endpoint
+	r.GET("/api/health", func(c *gin.Context) {
+		c.JSON(200, gin.H{"status": "ok"})
+	})
+
 	// Auth routes
-	r.POST("/register", handlers.HandleRegister)
-	r.POST("/login", handlers.HandleLogin)
+	r.POST("/api/register", handlers.HandleRegister)
+	r.POST("/api/login", handlers.HandleLogin)
 
 	// Branch management routes
 	r.POST("/api/branches/list", handlers.HandleListBranches)
