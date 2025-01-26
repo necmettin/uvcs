@@ -19,6 +19,14 @@ func HandleRegister(c *gin.Context) {
 	firstname := c.PostForm("firstname")
 	lastname := c.PostForm("lastname")
 
+	// Log received form data
+	fmt.Printf("Received registration form data:\n")
+	fmt.Printf("Username: %s\n", username)
+	fmt.Printf("Email: %s\n", email)
+	fmt.Printf("Password: [REDACTED]\n")
+	fmt.Printf("First Name: %s\n", firstname)
+	fmt.Printf("Last Name: %s\n", lastname)
+
 	if password == "" || firstname == "" || lastname == "" || email == "" {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": "Email, password, first name, and last name are required",
@@ -82,12 +90,15 @@ func HandleRegister(c *gin.Context) {
 
 // HandleLogin handles user login
 func HandleLogin(c *gin.Context) {
-	identifier := c.PostForm("identifier") // can be username or email
+	identifier := c.PostForm("identifier")
 	password := c.PostForm("password")
+
+	// Log received form data
+	fmt.Printf("Login attempt - Identifier: %s, Password: %s\n", identifier, password)
 
 	if identifier == "" || password == "" {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Missing identifier or password",
+			"error": "Identifier and password are required",
 		})
 		return
 	}
@@ -108,7 +119,7 @@ func HandleLogin(c *gin.Context) {
 	err := db.DB.QueryRow(`
 		SELECT id, username, email, firstname, lastname, password, skey1, skey2, is_active
 		FROM users
-		WHERE (username = $1 OR email = $1)
+		WHERE (username = $1 OR email = $1) AND is_active = true
 	`, identifier).Scan(&userID, &username, &email, &firstname, &lastname, &dbPass, &skey1, &skey2, &isActive)
 
 	if err == sql.ErrNoRows {
@@ -119,27 +130,20 @@ func HandleLogin(c *gin.Context) {
 	}
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": fmt.Sprintf("Database error: %v", err),
+			"error": "Database error",
 		})
 		return
 	}
 
-	if !isActive {
-		c.JSON(http.StatusUnauthorized, gin.H{
-			"error": "Account is disabled",
-		})
-		return
-	}
-
-	// Check password
-	err = bcrypt.CompareHashAndPassword([]byte(dbPass), []byte(password))
-	if err != nil {
+	// Verify password
+	if err := bcrypt.CompareHashAndPassword([]byte(dbPass), []byte(password)); err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{
 			"error": "Invalid credentials",
 		})
 		return
 	}
 
+	// Return user info and security keys
 	c.JSON(http.StatusOK, gin.H{
 		"message": "Login successful",
 		"user": gin.H{

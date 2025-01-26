@@ -102,6 +102,7 @@ import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useToast } from 'vue-toastification';
 import type { Repository } from '../types';
+import { api } from '../services/api';
 
 const router = useRouter();
 const toast = useToast();
@@ -138,7 +139,11 @@ const handleCreate = async () => {
   createError.value = '';
 
   try {
-    // TODO: Implement API call to create repository
+    const formData = new FormData();
+    formData.append('name', newRepo.value.name);
+    formData.append('description', newRepo.value.description);
+
+    await api.createRepository(newRepo.value.name, newRepo.value.description);
     toast.success('Repository created successfully');
     showCreateModal.value = false;
     await router.push(`/repository/${newRepo.value.name}`);

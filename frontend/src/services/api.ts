@@ -27,6 +27,16 @@ class ApiService {
         });
     }
 
+    private addAuthToFormData(formData: FormData): FormData {
+        const skey1 = localStorage.getItem('skey1');
+        const skey2 = localStorage.getItem('skey2');
+        if (skey1 && skey2) {
+            formData.append('skey1', skey1);
+            formData.append('skey2', skey2);
+        }
+        return formData;
+    }
+
     // Auth endpoints
     async register(username: string, email: string, password: string, firstname?: string, lastname?: string): Promise<void> {
         const formData = new FormData();
@@ -36,7 +46,7 @@ class ApiService {
         if (firstname) formData.append('firstname', firstname);
         if (lastname) formData.append('lastname', lastname);
 
-        await this.api.post('/api/register', formData);
+        await this.api.postForm('/api/register', formData);
     }
 
     async login(identifier: string, password: string): Promise<AuthResponse> {
@@ -44,7 +54,7 @@ class ApiService {
         formData.append('identifier', identifier);
         formData.append('password', password);
 
-        const response = await this.api.post<AuthResponse>('/api/login', formData);
+        const response = await this.api.postForm<AuthResponse>('/api/login', formData);
         localStorage.setItem('skey1', response.data.skey1);
         localStorage.setItem('skey2', response.data.skey2);
         return response.data;
@@ -52,7 +62,18 @@ class ApiService {
 
     // Repository endpoints
     async getRepository(name: string): Promise<RepositoryResponse> {
-        const response = await this.api.get<RepositoryResponse>(`/api/repository?name=${encodeURIComponent(name)}`);
+        const formData = new FormData();
+        formData.append('name', name);
+        const response = await this.api.postForm<RepositoryResponse>('/api/repository', this.addAuthToFormData(formData));
+        return response.data;
+    }
+
+    async createRepository(name: string, description?: string): Promise<RepositoryResponse> {
+        const formData = new FormData();
+        formData.append('name', name);
+        if (description) formData.append('description', description);
+        
+        const response = await this.api.postForm<RepositoryResponse>('/api/repository', this.addAuthToFormData(formData));
         return response.data;
     }
 
@@ -63,23 +84,26 @@ class ApiService {
         files.forEach(file => formData.append('files[]', file));
         if (tags) formData.append('tags', tags.join(','));
 
-        const response = await this.api.post('/api/repository/commit', formData);
+        const response = await this.api.postForm('/api/repository/commit', this.addAuthToFormData(formData));
         return response.data;
     }
 
     // Branch operations
     async listBranches(repoName: string): Promise<void> {
-        await this.api.get(`/api/repository/${encodeURIComponent(repoName)}/branches`);
+        const formData = new FormData();
+        formData.append('name', repoName);
+        await this.api.postForm(`/api/repository/${encodeURIComponent(repoName)}/branches`, this.addAuthToFormData(formData));
     }
 
     async createBranch(repoName: string, branchName: string): Promise<void> {
         const formData = new FormData();
         formData.append('name', branchName);
-        await this.api.post(`/api/repository/${encodeURIComponent(repoName)}/branches`, formData);
+        await this.api.postForm(`/api/repository/${encodeURIComponent(repoName)}/branches`, this.addAuthToFormData(formData));
     }
 
     async deleteBranch(repoName: string, branchName: string): Promise<void> {
-        await this.api.delete(`/api/repository/${encodeURIComponent(repoName)}/branches/${encodeURIComponent(branchName)}`);
+        const formData = new FormData();
+        await this.api.postForm(`/api/repository/${encodeURIComponent(repoName)}/branches/${encodeURIComponent(branchName)}/delete`, this.addAuthToFormData(formData));
     }
 
     // Access control
@@ -87,15 +111,19 @@ class ApiService {
         const formData = new FormData();
         formData.append('username', username);
         formData.append('access_level', accessLevel);
-        await this.api.post(`/api/repository/${encodeURIComponent(repoName)}/access`, formData);
+        await this.api.postForm(`/api/repository/${encodeURIComponent(repoName)}/access`, this.addAuthToFormData(formData));
     }
 
     async revokeAccess(repoName: string, username: string): Promise<void> {
-        await this.api.delete(`/api/repository/${encodeURIComponent(repoName)}/access/${encodeURIComponent(username)}`);
+        const formData = new FormData();
+        formData.append('username', username);
+        await this.api.postForm(`/api/repository/${encodeURIComponent(repoName)}/access/revoke`, this.addAuthToFormData(formData));
     }
 
     async listAccess(repoName: string): Promise<void> {
-        await this.api.get(`/api/repository/${encodeURIComponent(repoName)}/access`);
+        const formData = new FormData();
+        formData.append('name', repoName);
+        await this.api.postForm(`/api/repository/${encodeURIComponent(repoName)}/access/list`, this.addAuthToFormData(formData));
     }
 
     // Utility methods
