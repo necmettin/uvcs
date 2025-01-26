@@ -455,3 +455,65 @@ The test suite includes:
 
 ### Test Database
 The test suite uses a separate database (`uvcs_test`) to avoid interfering with the production database. The test database is automatically set up with the required schema before running tests and cleaned up afterward.
+
+## Running with Docker Compose
+
+The application can be run in either development or production mode using Docker Compose.
+
+### Development Mode
+
+Development mode features:
+- Hot reloading for both frontend (Vite) and backend (Air)
+- Source code mounted as volumes for instant updates
+- Development-specific nginx configuration for HMR
+- Debug logging enabled
+
+To start in development mode:
+```bash
+cd server-setup
+docker-compose -f docker-compose.dev.yml up --build
+```
+
+The development environment will be available at:
+- Frontend: http://localhost/ (with HMR)
+- Backend API: http://localhost/api/
+- Direct Vite access: http://localhost:5173
+- Direct Backend access: http://localhost:8080
+
+### Production Mode
+
+Production mode features:
+- Optimized builds for both frontend and backend
+- Static file serving with caching
+- Production-grade nginx configuration
+- Release mode for better performance
+
+To start in production mode:
+```bash
+cd server-setup
+docker-compose up --build
+```
+
+The production environment will be available at:
+- Frontend: http://localhost/
+- Backend API: http://localhost/api/
+
+### Stopping the Application
+
+To stop either environment:
+```bash
+# For development
+docker-compose -f docker-compose.dev.yml down
+
+# For production
+docker-compose down
+```
+
+To completely clean up (including volumes):
+```bash
+# For development
+docker-compose -f docker-compose.dev.yml down -v
+
+# For production
+docker-compose down -v
+```
